@@ -25,6 +25,13 @@ class BlockTestCase(unittest.TestCase):
         result = json.loads(response.read().decode('utf-8'))
         return response.status, result
 
+    def get(self, url='/'):
+        headers = {'Content-type': 'application/json'}
+        self.connection.request('GET', url, "", headers)
+        response = self.connection.getresponse()
+        result = json.loads(response.read().decode('utf-8'))
+        return response.status, result
+
     def test_simple_submit(self):
         block = {
             "index": 0,
@@ -52,6 +59,10 @@ class BlockTestCase(unittest.TestCase):
         status_code, result = self.post(data=block)
         self.assertEqual(status_code, 200)
         self.assertIn('ok', result)
+        status_code, result = self.get()
+        self.assertEqual(status_code, 200)
+        self.assertIn('items', result)
+        self.assertEqual(len(result.get('items')), 2)
 
     def test_fails_to_append_by_hash(self):
         block = {

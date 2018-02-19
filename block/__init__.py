@@ -31,3 +31,12 @@ class Block:
         timestamp = current_timestamp() if timestamp is None else timestamp
         index = self.index + 1 if index is None else index
         return self.__class__(index, self.hash, data, timestamp)
+
+    def to_dict(self):
+        return {
+            'index': self.index,
+            'previous_hash': self.previous_hash,
+            'timestamp': self.timestamp,
+            'data': self.data,
+            'hash': self.hash
+        }

@@ -10,7 +10,11 @@ class NodeServerHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.send_header("Content-type", "application/json")
+        chain = self.server.chain
+        result = {'items': [item.to_dict() for item in chain]}
         self.end_headers()
+        json_string = json.dumps(result)
+        self.wfile.write(json_string.encode('utf-8'))
 
     def extract_json(self):
         content_len = int(self.headers.get('content-length'))
