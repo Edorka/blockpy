@@ -19,10 +19,7 @@ class NodeServerHandler(BaseHTTPRequestHandler):
 
     def reply_json(self, data, status_code=200):
         json_string = json.dumps(data)
-        if status_code > 199 and status_code < 300:
-            self.send_response(status_code)
-        else:
-            self.send_error(status_code)
+        self.send_response(status_code)
         self.send_header("Content-type", "application/json")
         self.end_headers()
         self.wfile.write(json_string.encode('utf-8'))
@@ -32,10 +29,10 @@ class NodeServerHandler(BaseHTTPRequestHandler):
         try:
             new_block = Block(json.get('index'), json.get('previous_hash'), json.get('data'))
             self.server.chain.append(new_block)
-            result_report = {"ok": True}
-        except Exception as failed:
+            result_report = {"ok": True, "hash": new_block.hash}
+        except Exception as error:
+            result_report = {'error': error.message}
             result_code = 500
-            result_report = {'error': failed.msg}
         return result_code, result_report
 
     def do_POST(self):
@@ -44,7 +41,6 @@ class NodeServerHandler(BaseHTTPRequestHandler):
             result_code, result_report = self.insert_block(json)
             self.reply_json(result_report, result_code)
         except JSONDecodeError as error:
-            print(dir(error))
             self.reply_json({'error': error.msg}, 400)
 
 
@@ -54,7 +50,6 @@ class Node(HTTPServer):
         self.port = port
         self.chain = Blockchain()
         server_address = ('', port)
-        print(server_address)
         super().__init__(server_address, NodeServerHandler)
 
     def serve(self):

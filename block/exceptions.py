@@ -5,6 +5,7 @@ class BlocksNotCorrelativeException(Exception):
         message = self.__class__._message.format(expected, received)
         # Call the base class constructor with the parameters it needs
         super().__init__(message)
+        self.message = message
 
 
 class BlocksNotSequentialException(Exception):
@@ -14,6 +15,7 @@ class BlocksNotSequentialException(Exception):
         message = self.__class__._message.format(next_timestamp, timestamp)
         # Call the base class constructor with the parameters it needs
         super().__init__(message)
+        self.message = message
 
 
 class BlockHashDontMatchException(Exception):
@@ -23,5 +25,4 @@ class BlockHashDontMatchException(Exception):
         message = self.__class__._message.format(current_hash, refences_hash)
         # Call the base class constructor with the parameters it needs
         super().__init__(message)
-
-
+        self.message = message
