@@ -38,7 +38,7 @@ class BlockTestCase(unittest.TestCase):
             "previous_hash": "000000000",
             "data": {'text': 'This is a first test'}
         }
-        status_code, result = self.post(data=block)
+        status_code, result = self.post(url='/blocks', data=block)
         self.assertEqual(status_code, 200)
         self.assertEqual(result.get('ok'), True)
 
@@ -48,7 +48,7 @@ class BlockTestCase(unittest.TestCase):
             "previous_hash": "000000000",
             "data": {'text': 'This is a first test'}
         }
-        status_code, result = self.post(data=block)
+        status_code, result = self.post(url='/blocks', data=block)
         self.assertEqual(status_code, 200)
         self.assertEqual(result.get('ok'), True)
         block = {
@@ -56,10 +56,10 @@ class BlockTestCase(unittest.TestCase):
             "previous_hash": result.get('hash'),
             "data": {'text': 'This is a second test'}
         }
-        status_code, result = self.post(data=block)
+        status_code, result = self.post(url='/blocks', data=block)
         self.assertEqual(status_code, 200)
         self.assertIn('ok', result)
-        status_code, result = self.get()
+        status_code, result = self.get(url='/blocks')
         self.assertEqual(status_code, 200)
         self.assertIn('items', result)
         self.assertEqual(len(result.get('items')), 2)
@@ -70,7 +70,7 @@ class BlockTestCase(unittest.TestCase):
             "previous_hash": "000000000",
             "data": {'text': 'This is a first test'}
         }
-        status_code, result = self.post(data=block)
+        status_code, result = self.post(url='/blocks', data=block)
         self.assertEqual(status_code, 200)
         self.assertEqual(result.get('ok'), True)
         block = {
@@ -78,7 +78,7 @@ class BlockTestCase(unittest.TestCase):
             "previous_hash": "000000000",
             "data": {'text': 'This is a second test'}
         }
-        status_code, result = self.post(data=block)
+        status_code, result = self.post(url='/blocks', data=block)
         self.assertEqual(status_code, 500)
         self.assertIn('error', result)
         expected_error = "Current hash \[[a-f0-9]*\] and \[[a-f0-9]*\] doesn't match."
@@ -90,7 +90,7 @@ class BlockTestCase(unittest.TestCase):
             "previous_hash": "000000000",
             "data": {'text': 'This is a first test'}
         }
-        status_code, result = self.post(data=block)
+        status_code, result = self.post(url='/blocks', data=block)
         self.assertEqual(status_code, 200)
         self.assertEqual(result.get('ok'), True)
         block = {
@@ -98,7 +98,7 @@ class BlockTestCase(unittest.TestCase):
             "previous_hash": result.get('hash'),
             "data": {'text': 'This is a second test'}
         }
-        status_code, result = self.post(data=block)
+        status_code, result = self.post(url='/blocks', data=block)
         self.assertEqual(status_code, 500)
         self.assertIn('error', result)
         expected_error = "Blocks are not correlated.Index [0-9]+ was expected but received [0-9]+."
