@@ -27,38 +27,37 @@ class APIClient():
         result = json.loads(response.read().decode('utf-8'))
         return response.status, result
 
-def when_get(url):
-    def wrapper(fn):
-        return APIHandler.when_get(url, fn)
-    return wrapper
-
-
-def when_post(url):
-    def wrapper(fn):
-        return APIHandler.when_post(url, fn)
-    return wrapper
-
 
 class UnknownMethod(Exception):
     pass
 
 
 class APIHandler(BaseHTTPRequestHandler):
-    methods_for_get = {}
-    methods_for_post = {}
 
-    @classmethod
-    def when_post(cls, url, fn):
-        cls.methods_for_post[url] = fn
-        return fn
+    def __init__(self, *args, **kwargs):
+        self.post_routes = {}
+        self.get_routes = {}
 
-    @classmethod
-    def when_get(cls, url, fn):
-        cls.methods_for_get[url] = fn
-        return fn
+    def serve(self, *args, **kwargs):
+        """
+        Will provide a parent class instance for every incomin connection
+        """
+        super().__init__(*args, **kwargs)
+
+    def when_post(self, url):
+        def decorator(f):
+            self.post_routes[url] = f
+            return f
+        return decorator
+
+    def when_get(self, url):
+        def decorator(f):
+            self.get_routes[url] = f
+            return f
+        return decorator
 
     def find_method(self, method, url):
-        source = self.methods_for_post if method == 'post' else self.methods_for_get
+        source = self.post_routes if method == 'post' else self.get_routes
         for method_url, method in source.items():
             if url == method_url:
                 return method

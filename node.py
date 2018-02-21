@@ -1,17 +1,20 @@
 from http.server import HTTPServer
+from http.server import BaseHTTPRequestHandler
 from block import Block
 from block.chain import Blockchain
-from json_api import when_get, when_post, APIHandler
+from json_api import APIHandler
 
 
-class NodeServerHandler(APIHandler):
+app = APIHandler()
 
-    @when_get('/blocks')
+class NodeServerHandler():
+
+    @app.when_get('/blocks')
     def list_blocks(self, params=None):
         chain = self.server.chain
         return 200, {'items': [item.to_dict() for item in chain]}
 
-    @when_get('/blocks/last')
+    @app.when_get('/blocks/last')
     def get_last_block(self, params=None):
         chain = self.server.chain
         last = chain.last()
@@ -20,7 +23,7 @@ class NodeServerHandler(APIHandler):
         else:
             return 200, last.to_dict()
 
-    @when_post('/blocks')
+    @app.when_post('/blocks')
     def insert_block(self, data):
         try:
             new_block = Block(data.get('index'), data.get('previous_hash'), data.get('data'))
@@ -39,7 +42,7 @@ class Node(HTTPServer):
         self.port = port
         self.chain = Blockchain()
         server_address = ('', port)
-        super().__init__(server_address, NodeServerHandler)
+        super().__init__(server_address, app.serve)
 
     def serve(self):
         try:
