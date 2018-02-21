@@ -1,39 +1,20 @@
 import unittest
 from node import Node
-import http.client
 import re
-import json
 import threading
-from urllib.parse import urlencode
+from json_api import APIClient
 
 
-class BlockTestCase(unittest.TestCase):
+class BlockTestCase(APIClient, unittest.TestCase):
 
     def setUp(self):
         service = Node(port=5555)
         threading.Thread(target=service.serve).start()
         self.node = service
-        self.connection = http.client.HTTPConnection('localhost:5555')
+        self.connect('localhost:5555')
 
     def tearDown(self):
         self.node.shutdown()
-
-    def post(self, url='/', data={}):
-        headers = {'Content-type': 'application/json'}
-        json_str = json.dumps(data)
-        self.connection.request('POST', url, json_str, headers)
-        response = self.connection.getresponse()
-        result = json.loads(response.read().decode('utf-8'))
-        return response.status, result
-
-    def get(self, url='/', params=None):
-        headers = {'Content-type': 'application/json'}
-        if params is not None:
-            url += '?' + urlencode(params)
-        self.connection.request('GET', url, headers=headers)
-        response = self.connection.getresponse()
-        result = json.loads(response.read().decode('utf-8'))
-        return response.status, result
 
     def test_simple_submit(self):
         block = {
