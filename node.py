@@ -1,11 +1,11 @@
 from http.server import HTTPServer
-from http.server import BaseHTTPRequestHandler
 from block import Block
 from block.chain import Blockchain
-from json_api import APIHandler
+from api.serve import APIHandler
 
 
 app = APIHandler()
+
 
 class NodeServerHandler():
 
