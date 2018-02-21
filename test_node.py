@@ -2,7 +2,7 @@ import unittest
 from node import Node
 import re
 import threading
-from json_api import APIClient
+from api.client import APIClient
 
 
 class BlockTestCase(APIClient, unittest.TestCase):
@@ -15,6 +15,7 @@ class BlockTestCase(APIClient, unittest.TestCase):
 
     def tearDown(self):
         self.node.shutdown()
+        self.node.server_close()
 
     def test_simple_submit(self):
         block = {
