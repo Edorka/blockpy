@@ -4,6 +4,7 @@ import http.client
 import re
 import json
 import threading
+from urllib.parse import urlencode
 
 
 class BlockTestCase(unittest.TestCase):
@@ -25,9 +26,11 @@ class BlockTestCase(unittest.TestCase):
         result = json.loads(response.read().decode('utf-8'))
         return response.status, result
 
-    def get(self, url='/'):
+    def get(self, url='/', params=None):
         headers = {'Content-type': 'application/json'}
-        self.connection.request('GET', url, "", headers)
+        if params is not None:
+            url += '?' + urlencode(params)
+        self.connection.request('GET', url, headers=headers)
         response = self.connection.getresponse()
         result = json.loads(response.read().decode('utf-8'))
         return response.status, result
@@ -62,6 +65,9 @@ class BlockTestCase(unittest.TestCase):
         status_code, result = self.get(url='/blocks')
         self.assertEqual(status_code, 200)
         self.assertIn('items', result)
+        self.assertEqual(len(result.get('items')), 2)
+        status_code, result = self.get(url='/blocks', params={'from_index': 1})
+        self.assertEqual(status_code, 200)
         self.assertEqual(len(result.get('items')), 2)
 
     def test_fails_to_append_by_hash(self):
@@ -103,3 +109,20 @@ class BlockTestCase(unittest.TestCase):
         self.assertIn('error', result)
         expected_error = "Blocks are not correlated.Index [0-9]+ was expected but received [0-9]+."
         self.assertTrue(re.match(expected_error, result.get('error')))
+
+    def test_get_not_existent_last_block(self):
+        status_code, result = self.get(url='/blocks/last')
+        self.assertEqual(status_code, 404)
+
+    def test_get_last_block(self):
+        data = {'text': 'This is a first test'}
+        block = {
+            "index": 0,
+            "previous_hash": "000000000",
+            "data": data
+        }
+        status_code, result = self.post(url='/blocks', data=block)
+        self.assertEqual(status_code, 200)
+        self.assertEqual(result.get('ok'), True)
+        status_code, result = self.get(url='/blocks/last')
+        self.assertEqual(data, result.get('data'))

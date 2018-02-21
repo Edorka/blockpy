@@ -7,9 +7,18 @@ from json_api import when_get, when_post, APIHandler
 class NodeServerHandler(APIHandler):
 
     @when_get('/blocks')
-    def list_blocks(self):
+    def list_blocks(self, params=None):
         chain = self.server.chain
         return 200, {'items': [item.to_dict() for item in chain]}
+
+    @when_get('/blocks/last')
+    def get_last_block(self, params=None):
+        chain = self.server.chain
+        last = chain.last()
+        if last is None:
+            return 404, {'error': 'blockchain is empty'}
+        else:
+            return 200, last.to_dict()
 
     @when_post('/blocks')
     def insert_block(self, data):

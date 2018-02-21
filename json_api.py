@@ -1,4 +1,5 @@
 from http.server import BaseHTTPRequestHandler
+from urllib.parse import urlparse
 import json
 
 
@@ -49,7 +50,8 @@ class APIHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         try:
-            method = self.find_method('post', self.path)
+            parsed = urlparse(self.path)
+            method = self.find_method('post', parsed.path)
             data = self.extract_json()
             code, result = method(self, data)
         except UnknownMethod:
@@ -58,8 +60,9 @@ class APIHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         try:
-            method = self.find_method('get', self.path)
-            code, result = method(self)
+            parsed = urlparse(self.path)
+            method = self.find_method('get', parsed.path)
+            code, result = method(self, params=parsed.params)
         except UnknownMethod:
             code, result = 404, {'error': 'method not found'}
         self.reply(code, result)
