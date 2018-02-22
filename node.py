@@ -2,6 +2,7 @@ from http.server import HTTPServer
 from block import Block
 from block.chain import Blockchain
 from api.serve import APIHandler
+from api.client import APIClient
 
 
 app = APIHandler()
@@ -35,14 +36,41 @@ class NodeServerHandler():
             result_code = 500
         return result_code, result_report
 
+    @app.when_post('/peers')
+    def add_peer(self, data):
+        new_host = data.get('peer')
+        if new_host not in [peer.host for peer in self.server.peers]:
+            self.server.new_peer(new_host)
+            return 201, {'ok': True}
+        return 200, {'ok': True, 'known': True}
+
+
+class NodeClient(APIClient):
+
+    def __init__(self, host):
+        # self.host = host
+        # self.connect(host)
+        self.chain = []
+        super().__init__(host)
+
+    def update(self):
+        status_code, result = self.get(url='/blocks')
+        return status_code, result
+
 
 class Node(HTTPServer):
 
     def __init__(self, port=8181):
         self.port = port
         self.chain = Blockchain()
+        self.peers = []
         server_address = ('', port)
         super().__init__(server_address, app.serve)
+
+    def new_peer(self, host):
+        new_node = NodeClient(host)
+        self.peers.append(new_node)
+        new_node.update()
 
     def serve(self):
         try:
@@ -51,7 +79,7 @@ class Node(HTTPServer):
             self.server_close()
 
     @classmethod
-    def run(cls, port=8181, handler_class=NodeServerHandler):
+    def run(cls, port=8181):
         return cls(port=port).serve()
 
 

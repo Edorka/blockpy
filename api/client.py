@@ -5,6 +5,10 @@ from urllib.parse import urlencode
 
 class APIClient():
 
+    def __init__(self, host):
+        self.host = host
+        self.connect(host)
+
     def connect(self, host):
         self.connection = HTTPConnection(host)
 
