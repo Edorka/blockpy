@@ -5,7 +5,7 @@ import threading
 from api.client import APIClient
 
 
-class BlockTestCase(APIClient, unittest.TestCase):
+class BlockTestCase(unittest.TestCase, APIClient):
 
     def setUp(self):
         service = Node(port=5555)
@@ -108,3 +108,13 @@ class BlockTestCase(APIClient, unittest.TestCase):
         self.assertEqual(result.get('ok'), True)
         status_code, result = self.get(url='/blocks/last')
         self.assertEqual(data, result.get('data'))
+
+    def test_add_peer(self):
+        self.assertEqual(len(self.node.peers), 0)
+        new_peer = {'peer': 'ws://127.0.0.1:5556'}
+        status_code, result = self.post(url='/peers', data=new_peer)
+        self.assertEqual(status_code, 201)
+        self.assertEqual(len(self.node.peers), 1)
+        status_code, result = self.post(url='/peers', data=new_peer)
+        self.assertEqual(status_code, 200)
+        self.assertEqual(len(self.node.peers), 1)

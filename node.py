@@ -70,7 +70,6 @@ class Node(HTTPServer):
     def new_peer(self, host):
         new_node = NodeClient(host)
         self.peers.append(new_node)
-        new_node.update()
 
     def serve(self):
         try:
