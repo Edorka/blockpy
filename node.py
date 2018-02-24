@@ -3,7 +3,6 @@ from block import Block
 from block.chain import Blockchain
 from api.serve import APIHandler
 from api.client import APIClient
-import asyncio
 
 
 app = APIHandler()
@@ -53,35 +52,42 @@ class NodeClient(APIClient):
         # self.connect(host)
         super().__init__(host)
 
-    async def update(self):
-        print('updating', self, self.connection)
+    def update(self, current):
         status_code, result = self.get(url='/blocks')
-        return status_code, result
+        processed_indexes = [block.index for block in current]
+        for data in result.get('items', []):
+            index = data.get('index')
+            if index in processed_indexes:
+                continue
+            new_block = Block(index, data.get('previous_hash'), data.get('data'))
+            current.append(new_block)
 
 
 class Node(HTTPServer):
 
-    def __init__(self, port=8181, genesis_block=None):
-        self.loop = asyncio.get_event_loop()
+    def __init__(self, port=8181, genesis_block=None, peers=[]):
         self.port = port
         self.chain = Blockchain()
         if genesis_block is not None:
             self.chain.append(genesis_block)
-        self.peers = []
+        self.peers = [NodeClient(host) for host in peers]
         server_address = ('', port)
         super().__init__(server_address, app.serve)
+        self.update_from_peers()
 
     def new_peer(self, host):
         new_node = NodeClient(host)
         self.peers.append(new_node)
-        self.loop.run_until_complete(new_node.update())
 
     def serve(self):
         try:
             self.serve_forever()
         finally:
             self.server_close()
-        self.loop.close()
+
+    def update_from_peers(self):
+        for peer in self.peers:
+            peer.update(self.chain)
 
     @classmethod
     def run(cls, port=8181):
