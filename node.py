@@ -3,6 +3,7 @@ from block import Block
 from block.chain import Blockchain
 from api.serve import APIHandler
 from api.client import APIClient
+import asyncio
 
 
 app = APIHandler()
@@ -50,19 +51,22 @@ class NodeClient(APIClient):
     def __init__(self, host):
         # self.host = host
         # self.connect(host)
-        self.chain = []
         super().__init__(host)
 
-    def update(self):
+    async def update(self):
+        print('updating', self, self.connection)
         status_code, result = self.get(url='/blocks')
         return status_code, result
 
 
 class Node(HTTPServer):
 
-    def __init__(self, port=8181):
+    def __init__(self, port=8181, genesis_block=None):
+        self.loop = asyncio.get_event_loop()
         self.port = port
         self.chain = Blockchain()
+        if genesis_block is not None:
+            self.chain.append(genesis_block)
         self.peers = []
         server_address = ('', port)
         super().__init__(server_address, app.serve)
@@ -70,12 +74,14 @@ class Node(HTTPServer):
     def new_peer(self, host):
         new_node = NodeClient(host)
         self.peers.append(new_node)
+        self.loop.run_until_complete(new_node.update())
 
     def serve(self):
         try:
             self.serve_forever()
         finally:
             self.server_close()
+        self.loop.close()
 
     @classmethod
     def run(cls, port=8181):
