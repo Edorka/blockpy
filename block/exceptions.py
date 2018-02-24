@@ -26,3 +26,14 @@ class BlockHashDontMatchException(Exception):
         # Call the base class constructor with the parameters it needs
         super().__init__(message)
         self.message = message
+
+
+class FirstGenesisBlockExpectedException(Exception):
+    _message = "First block on a blockchain should be a Genesis Block"
+
+    def __init__(self, received=None):
+        message = self.__class__._message
+        # Call the base class constructor with the parameters it needs
+        super().__init__(message)
+        self.message = message
+        self.received = received

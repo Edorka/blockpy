@@ -1,9 +1,10 @@
 import unittest
-from block import Block
+from block import Block, GenesisBlock
 from block.chain import Blockchain
 from block.exceptions import (BlocksNotCorrelativeException,
                               BlocksNotSequentialException,
-                              BlockHashDontMatchException)
+                              BlockHashDontMatchException,
+                              FirstGenesisBlockExpectedException)
 
 
 class BlockTestCase(unittest.TestCase):
@@ -29,7 +30,7 @@ class BlockchainTestCase(unittest.TestCase):
         data = {
             'message': 'this is the genesis block'
         }
-        genesis_block = Block(0, "000", data)
+        genesis_block = GenesisBlock(data)
         data = {
             'message': 'this is a test'
         }
@@ -46,11 +47,19 @@ class BlockchainTestCase(unittest.TestCase):
         self.assertIn(next_block, self.chain)
         self.assertIn(genesis_block, self.chain)
 
-    def test_invalid_index(self):
+    def test_invalid_first_block(self):
         data = {
             'message': 'this is the genesis block'
         }
         genesis_block = Block(0, "000", data)
+        with self.assertRaises(FirstGenesisBlockExpectedException):
+            self.chain.append(genesis_block)
+
+    def test_invalid_index(self):
+        data = {
+            'message': 'this is the genesis block'
+        }
+        genesis_block = GenesisBlock(data)
         self.chain.append(genesis_block)
         data = {
             'message': 'this is a test'
@@ -65,7 +74,7 @@ class BlockchainTestCase(unittest.TestCase):
         data = {
             'message': 'this is the genesis block'
         }
-        genesis_block = Block(0, "000", data)
+        genesis_block = GenesisBlock(data)
         self.chain.append(genesis_block)
         data = {
             'message': 'this is a test'
@@ -79,16 +88,17 @@ class BlockchainTestCase(unittest.TestCase):
         data = {
             'message': 'this is the genesis block'
         }
-        genesis_block = Block(0, "000", data)
+        genesis_block = GenesisBlock(data)
         self.chain.append(genesis_block)
+        rogue_data = {
+            'message': 'this is a different genesis block'
+        }
+        rogue_genesis_block = GenesisBlock(rogue_data)
         data = {
             'message': 'this is a test'
         }
-        next_block = genesis_block.next(data)
+        next_block = rogue_genesis_block.next(data)
         next_block.timestamp = genesis_block.timestamp + 100
-        genesis_block.data = {
-            'message': 'this is a modified genesis block'
-        }
         with self.assertRaises(BlockHashDontMatchException):
             self.chain.append(next_block)
 

@@ -1,7 +1,9 @@
 from collections import deque
+from block import GenesisBlock
 from block.exceptions import (BlocksNotCorrelativeException,
                               BlocksNotSequentialException,
-                              BlockHashDontMatchException)
+                              BlockHashDontMatchException,
+                              FirstGenesisBlockExpectedException)
 
 
 class Blockchain(deque):
@@ -32,7 +34,7 @@ class Blockchain(deque):
             raise BlockHashDontMatchException(current_hash, refences_hash)
         return True
 
-    def valid_next(self, last, next_block):
+    def validate_next(self, last, next_block):
         self.are_correlated(last, next_block)
         self.emmited_before(last, next_block)
         self.hash_validates(last, next_block)
@@ -40,5 +42,9 @@ class Blockchain(deque):
 
     def append(self, other):
         last = self.last()
-        if last is None or self.valid_next(last, other):
-            super().append(other)
+        if last is None:
+            if isinstance(other, GenesisBlock) is not True:
+                raise FirstGenesisBlockExpectedException(received=other)
+        else:
+            self.validate_next(last, other)
+        super().append(other)
