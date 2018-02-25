@@ -26,10 +26,24 @@ class BlockTestCase(unittest.TestCase, APIClient):
         self.node_b.shutdown()
         self.node_b.server_close()
 
-    def test_pee_would_import_node_a(self):
+    def test_peer_would_import_node_a(self):
         new_block = self.genesis_block.next({"message": "second block"})
         self.node_a.chain.append(new_block)
         service_c = Node(port=5558, genesis_block=self.genesis_block, peers=['127.0.0.1:5555'])
         self.assertEqual(len(service_c.peers), 1)
         self.assertEqual(len(service_c.chain), 2)
         service_c.server_close()
+
+    def test_peer_cant_import_diffrent_network(self):
+        new_block = self.genesis_block.next({"message": "second block"})
+        self.node_a.chain.append(new_block)
+        data = {
+            'message': 'this is the genesis block'
+        }
+        rogue_genesis_work = GenesisBlock(data)
+        service_c = Node(port=5558, genesis_block=rogue_genesis_work, peers=['127.0.0.1:5555'])
+        self.assertEqual(len(service_c.peers), 1)
+        self.assertEqual(len(service_c.chain), 1)
+        service_c.server_close()
+
+
