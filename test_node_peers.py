@@ -37,13 +37,12 @@ class BlockTestCase(unittest.TestCase, APIClient):
     def test_peer_cant_import_diffrent_network(self):
         new_block = self.genesis_block.next({"message": "second block"})
         self.node_a.chain.append(new_block)
+        self.assertEqual(len(self.node_a.chain), 2)
         data = {
-            'message': 'this is the genesis block'
+            'message': 'this is not the same genesis block'
         }
         rogue_genesis_work = GenesisBlock(data)
         service_c = Node(port=5558, genesis_block=rogue_genesis_work, peers=['127.0.0.1:5555'])
         self.assertEqual(len(service_c.peers), 1)
         self.assertEqual(len(service_c.chain), 1)
         service_c.server_close()
-
-

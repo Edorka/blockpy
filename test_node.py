@@ -37,7 +37,7 @@ class BlockTestCase(unittest.TestCase, APIClient):
         self.assertEqual(len(result.get('items')), 2)
         status_code, result = self.get(url='/blocks', params={'from_index': 1})
         self.assertEqual(status_code, 200)
-        self.assertEqual(len(result.get('items')), 2)
+        self.assertEqual(len(result.get('items')), 2 - 1)
 
     def test_fails_to_append_by_hash(self):
         block = {
@@ -66,7 +66,7 @@ class BlockTestCase(unittest.TestCase, APIClient):
     def test_get_not_existent_last_block(self):
         status_code, result = self.get(url='/blocks/last')
         self.assertEqual(status_code, 200)
-        self.assertEqual(result.get('hash'), self.genesis_block.hash) 
+        self.assertEqual(result.get('hash'), self.genesis_block.hash)
 
     def test_get_last_block(self):
         data = {'text': 'This is a first test'}

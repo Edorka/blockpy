@@ -3,6 +3,7 @@ from block import Block
 from block.chain import Blockchain
 from api.serve import APIHandler
 from api.client import APIClient
+from collections import deque
 
 
 app = APIHandler()
@@ -13,7 +14,13 @@ class NodeServerHandler():
     @app.when_get('/blocks')
     def list_blocks(self, params=None):
         chain = self.server.chain
-        return 200, {'items': [item.to_dict() for item in chain]}
+        index_start = 0
+        if isinstance(params, dict):
+            index_start_values = params.get('from_index')
+            if type(index_start_values) == list:
+                index_start = int(index_start_values[0])
+        items = [item.to_dict() for item in chain if item.index >= index_start]
+        return 200, {'items': items}
 
     @app.when_get('/blocks/last')
     def get_last_block(self, params=None):
@@ -48,19 +55,20 @@ class NodeServerHandler():
 class NodeClient(APIClient):
 
     def __init__(self, host):
-        # self.host = host
-        # self.connect(host)
+        self.errors = deque()
         super().__init__(host)
 
     def update(self, current):
-        status_code, result = self.get(url='/blocks')
-        processed_indexes = [block.index for block in current]
+        processed_index = max([block.index for block in current])
+        index_param = {'from_index': processed_index + 1}
+        status_code, result = self.get(url='/blocks', params=index_param)
         for data in result.get('items', []):
             index = data.get('index')
-            if index in processed_indexes:
-                continue
             new_block = Block(index, data.get('previous_hash'), data.get('data'))
-            current.append(new_block)
+            try:
+                current.append(new_block)
+            except Exception as error:
+                self.errors.append(error)
 
 
 class Node(HTTPServer):
@@ -70,7 +78,9 @@ class Node(HTTPServer):
         self.chain = Blockchain()
         if genesis_block is not None:
             self.chain.append(genesis_block)
-        self.peers = [NodeClient(host) for host in peers]
+        self.peers = []
+        for host in peers:
+            self.new_peer(host)
         server_address = ('', port)
         super().__init__(server_address, app.serve)
         self.update_from_peers()
@@ -78,6 +88,7 @@ class Node(HTTPServer):
     def new_peer(self, host):
         new_node = NodeClient(host)
         self.peers.append(new_node)
+        new_node.update(self.chain)
 
     def serve(self):
         try:

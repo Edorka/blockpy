@@ -1,5 +1,5 @@
 from http.server import BaseHTTPRequestHandler
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 import json
 
 
@@ -60,7 +60,8 @@ class APIHandler(BaseHTTPRequestHandler):
         try:
             parsed = urlparse(self.path)
             method = self.find_method('get', parsed.path)
-            code, result = method(self, params=parsed.params)
+            params = parse_qs(parsed.query)
+            code, result = method(self, params=params)
         except UnknownMethod:
             code, result = 404, {'error': 'method not found'}
         self.reply(code, result)
