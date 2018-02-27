@@ -35,7 +35,7 @@ class NodeServerHandler():
     def insert_block(self, data):
         try:
             new_block = Block(data.get('index'), data.get('previous_hash'), data.get('data'))
-            self.server.chain.append(new_block)
+            self.server.add_block(new_block)
             result_report = {"ok": True, "hash": new_block.hash}
             result_code = 200
         except Exception as error:
@@ -61,31 +61,54 @@ class NodeClient(APIClient):
     def update(self, current):
         processed_index = max([block.index for block in current])
         index_param = {'from_index': processed_index + 1}
-        status_code, result = self.get(url='/blocks', params=index_param)
-        for data in result.get('items', []):
-            index = data.get('index')
-            new_block = Block(index, data.get('previous_hash'), data.get('data'))
-            try:
-                current.append(new_block)
-            except Exception as error:
-                self.errors.append(error)
+        try:
+            status_code, result = self.get(url='/blocks', params=index_param)
+            for data in result.get('items', []):
+                index = data.get('index')
+                new_block = Block(index, data.get('previous_hash'), data.get('data'))
+                try:
+                    current.append(new_block)
+                except Exception as error:
+                    self.errors.append(error)
+            return status_code, result
+        except Exception as error:
+            self.errors.append(error)
+            return 500, {'error': str(error)}
+
+    def report(self, new_block):
+        try:
+            return self.post(url='/blocks', data=new_block.to_dict())
+        except Exception as error:
+            self.errors.append(error)
+            return 500, {'error': str(error)}
 
 
 class Node(HTTPServer):
     allow_reuse_address = True
 
     def __init__(self, port=8181, genesis_block=None, peers=[]):
+        self.set_chain(genesis_block)
+        self.listen(port)
+        self.set_peers(peers)
+        self.update_from_peers()
 
-        self.port = port
+    def set_chain(self, genesis_block):
         self.chain = Blockchain()
         if genesis_block is not None:
             self.chain.append(genesis_block)
-        self.peers = []
-        for host in peers:
-            self.new_peer(host)
+
+    def add_block(self, new_block):
+        self.chain.append(new_block)
+        self.report_to_peers(new_block)
+
+    def listen(self, port):
         server_address = ('', port)
         super().__init__(server_address, app.serve)
-        self.update_from_peers()
+
+    def set_peers(self, peers):
+        self.peers = []
+        for peer in peers:
+            self.new_peer(peer)
 
     def new_peer(self, host):
         new_node = NodeClient(host)
@@ -101,6 +124,10 @@ class Node(HTTPServer):
     def update_from_peers(self):
         for peer in self.peers:
             peer.update(self.chain)
+
+    def report_to_peers(self, new_block):
+        for peer in self.peers:
+            peer.report(new_block)
 
     @classmethod
     def run(cls, port=8181):
