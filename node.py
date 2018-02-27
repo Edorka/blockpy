@@ -72,8 +72,10 @@ class NodeClient(APIClient):
 
 
 class Node(HTTPServer):
+    allow_reuse_address = True
 
     def __init__(self, port=8181, genesis_block=None, peers=[]):
+
         self.port = port
         self.chain = Blockchain()
         if genesis_block is not None:
