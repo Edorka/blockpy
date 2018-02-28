@@ -33,11 +33,12 @@ class NodeServerHandler():
 
     @app.when_post('/blocks')
     def insert_block(self, data):
+        result_code = 200
+        result_report = {'result', 'unkown'}
         try:
             new_block = Block(data.get('index'), data.get('previous_hash'), data.get('data'))
-            self.server.add_block(new_block)
+            self.server.add_block(new_block, report=data.get('new', False))
             result_report = {"ok": True, "hash": new_block.hash}
-            result_code = 200
         except Exception as error:
             result_report = {'error': error.message}
             result_code = 500
@@ -58,22 +59,26 @@ class NodeClient(APIClient):
         self.errors = deque()
         super().__init__(host)
 
-    def update(self, current):
-        processed_index = max([block.index for block in current])
-        index_param = {'from_index': processed_index + 1}
-        try:
-            status_code, result = self.get(url='/blocks', params=index_param)
-            for data in result.get('items', []):
+    def update_with_data(self, response, current):
+        for data in response.get('items', []):
+            try:
                 index = data.get('index')
                 new_block = Block(index, data.get('previous_hash'), data.get('data'))
-                try:
-                    current.append(new_block)
-                except Exception as error:
-                    self.errors.append(error)
-            return status_code, result
+                current.append(new_block)
+            except Exception as error:
+                self.errors.append(error)
+
+    def update(self, current):
+        status_code, result = 200, None
+        try:
+            processed_index = max([block.index for block in current])
+            index_param = {'from_index': processed_index + 1}
+            status_code, result = self.get(url='/blocks', params=index_param)
+            self.update_with_data(result, current)
         except Exception as error:
             self.errors.append(error)
-            return 500, {'error': str(error)}
+            status_code, result = 500, {'error': str(error)}
+        return status_code, result
 
     def report(self, new_block):
         try:
@@ -97,9 +102,10 @@ class Node(HTTPServer):
         if genesis_block is not None:
             self.chain.append(genesis_block)
 
-    def add_block(self, new_block):
+    def add_block(self, new_block, report=False):
         self.chain.append(new_block)
-        self.report_to_peers(new_block)
+        if report is True:
+            self.report_to_peers(new_block)
 
     def listen(self, port):
         server_address = ('', port)
