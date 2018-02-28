@@ -69,16 +69,11 @@ class NodeClient(APIClient):
                 self.errors.append(error)
 
     def update(self, current):
-        status_code, result = 200, None
-        try:
-            processed_index = max([block.index for block in current])
-            index_param = {'from_index': processed_index + 1}
-            status_code, result = self.get(url='/blocks', params=index_param)
+        processed_index = max([block.index for block in current])
+        index_param = {'from_index': processed_index + 1}
+        status_code, result = self.get(url='/blocks', params=index_param)
+        if status_code == 200:
             self.update_with_data(result, current)
-        except Exception as error:
-            self.errors.append(error)
-            status_code, result = 500, {'error': str(error)}
-        return status_code, result
 
     def report(self, new_block):
         try:
@@ -105,11 +100,17 @@ class Node(HTTPServer):
     def add_block(self, new_block, report=False):
         self.chain.append(new_block)
         if report is True:
-            self.report_to_peers(new_block)
+            self.broadcast(new_block)
 
     def listen(self, port):
         server_address = ('', port)
         super().__init__(server_address, app.serve)
+
+    def serve(self):
+        try:
+            self.serve_forever()
+        finally:
+            self.server_close()
 
     def set_peers(self, peers):
         self.peers = []
@@ -121,17 +122,11 @@ class Node(HTTPServer):
         self.peers.append(new_node)
         new_node.update(self.chain)
 
-    def serve(self):
-        try:
-            self.serve_forever()
-        finally:
-            self.server_close()
-
     def update_from_peers(self):
         for peer in self.peers:
             peer.update(self.chain)
 
-    def report_to_peers(self, new_block):
+    def broadcast(self, new_block):
         for peer in self.peers:
             peer.report(new_block)
 

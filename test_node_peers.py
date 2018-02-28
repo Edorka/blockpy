@@ -1,5 +1,5 @@
 import unittest
-from node import Node, NodeClient
+from node import Node
 import threading
 from api.client import APIClient
 from block import GenesisBlock
@@ -8,7 +8,6 @@ from block import GenesisBlock
 class BlockTestCase(unittest.TestCase, APIClient):
 
     def create_node(self, name, port=35555, genesis_block=None, peers=[]):
-        print('creating', name, port)
         if genesis_block is None:
             genesis_block = self.genesis_block
         new_node = Node(port=port, peers=peers, genesis_block=genesis_block)
@@ -29,7 +28,6 @@ class BlockTestCase(unittest.TestCase, APIClient):
         for name, node in self.nodes.items():
             node.shutdown()
             node.server_close()
-            print('closing', name, node)
 
     def test_peer_would_import_node_a(self):
         new_block = self.genesis_block.next({"message": "second block"})
