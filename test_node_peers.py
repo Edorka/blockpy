@@ -63,3 +63,8 @@ class BlockTestCase(unittest.TestCase, APIClient):
         self.assertEqual(len(node_c.peers), 2)
         self.assertEqual(len(node_a.chain), 2)
         self.assertEqual(len(node_b.chain), 2)
+
+    def test_peer_address_collision(self):
+        import socket
+        with self.assertRaises(socket.error):
+            self.create_node('c', port=35555)

@@ -1,6 +1,7 @@
 from block.chain import Blockchain
 from .service import app
 from .client import NodeClient
+import socket
 from http.server import HTTPServer
 
 
@@ -23,9 +24,16 @@ class Node(HTTPServer):
         if report is True:
             self.broadcast(new_block)
 
-    def listen(self, port):
-        server_address = ('', port)
-        super().__init__(server_address, app.serve)
+    def listen(self, port, retry=3):
+        while retry:
+            try:
+                server_address = ('', port)
+                super().__init__(server_address, app.serve)
+                break
+            except socket.error as error:
+                retry -= 1
+                if retry is 0:
+                    raise error
 
     def serve(self):
         try:
