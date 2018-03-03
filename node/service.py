@@ -1,4 +1,3 @@
-from http.server import HTTPServer
 from block import Block
 from api.serve import APIHandler
 
@@ -28,13 +27,30 @@ class NodeServerHandler():
         else:
             return 200, last.to_dict()
 
+    @app.when_put('/blocks')
+    def update_blocks(self, data):
+        result_code = 200
+        result_report = {'result': 'unknown'}
+        try:
+            new_block = Block(data.get('index'),
+                              data.get('previous_hash'),
+                              data.get('data'),
+                              data.get('timestamp'))
+            is_new = self.server.add_block(new_block, report=False)
+            result_code = 201 if is_new else 200
+            result_report = {"ok": True, "hash": new_block.hash}
+        except Exception as error:
+            result_report = {'error': error.message}
+            result_code = 500
+        return result_code, result_report
+
     @app.when_post('/blocks')
     def admit_block(self, data):
-        result_code = 200
-        result_report = {'result', 'unkown'}
+        result_code = 201
+        result_report = {'result': 'unkown'}
         try:
             new_block = Block(data.get('index'), data.get('previous_hash'), data.get('data'))
-            self.server.add_block(new_block, report=data.get('new', False))
+            self.server.add_block(new_block, report=True)
             result_report = {"ok": True, "hash": new_block.hash}
         except Exception as error:
             result_report = {'error': error.message}

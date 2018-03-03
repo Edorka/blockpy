@@ -38,6 +38,18 @@ class Block:
             'hash': self.hash
         }
 
+    def __eq__(self, other):
+        return (self.index == other.index and
+                self.data == other.data and
+                self.timestamp == other.timestamp and
+                self.hash == other.hash and
+                self.previous_hash == other.previous_hash)
+
+    def __repr__(self):
+        return "<Block {index} {hash} {timestamp}>".format(index=self.index,
+                                                           hash=self.hash,
+                                                           timestamp=self.timestamp)
+
 
 class GenesisBlock(Block):
 

@@ -12,6 +12,7 @@ class APIHandler(BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         self.post_routes = {}
         self.get_routes = {}
+        self.put_routes = {}
 
     def serve(self, *args, **kwargs):
         """
@@ -31,8 +32,20 @@ class APIHandler(BaseHTTPRequestHandler):
             return f
         return decorator
 
+    def when_put(self, url):
+        def decorator(f):
+            self.put_routes[url] = f
+            return f
+        return decorator
+
     def find_method(self, method, url):
-        source = self.post_routes if method == 'post' else self.get_routes
+        source = {}
+        if method == 'post':
+            source = self.post_routes
+        elif method == 'get':
+            source = self.get_routes
+        elif method == 'put':
+            source = self.put_routes
         for method_url, method in source.items():
             if url == method_url:
                 return method
@@ -50,6 +63,16 @@ class APIHandler(BaseHTTPRequestHandler):
         try:
             parsed = urlparse(self.path)
             method = self.find_method('post', parsed.path)
+            data = self.extract_json()
+            code, result = method(self, data)
+        except UnknownMethod:
+            code, result = 404, {'error': 'method not found'}
+        self.reply(code, result)
+
+    def do_PUT(self):
+        try:
+            parsed = urlparse(self.path)
+            method = self.find_method('put', parsed.path)
             data = self.extract_json()
             code, result = method(self, data)
         except UnknownMethod:

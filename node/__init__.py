@@ -20,9 +20,12 @@ class Node(HTTPServer):
             self.chain.append(genesis_block)
 
     def add_block(self, new_block, report=False):
+        if new_block in self.chain:
+            return False
         self.chain.append(new_block)
         if report is True:
             self.broadcast(new_block)
+        return True
 
     def listen(self, port, retry=3):
         while retry:
@@ -49,15 +52,15 @@ class Node(HTTPServer):
     def new_peer(self, host):
         new_node = NodeClient(host)
         self.peers.append(new_node)
-        new_node.update(self.chain)
+        new_node.get_update(self.chain)
 
     def update_from_peers(self):
         for peer in self.peers:
-            peer.update(self.chain)
+            peer.get_update(self.chain)
 
     def broadcast(self, new_block):
         for peer in self.peers:
-            peer.report(new_block)
+            peer.report_update(new_block)
 
     @classmethod
     def run(cls, port=8181):

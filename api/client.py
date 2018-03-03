@@ -20,6 +20,15 @@ class APIClient():
         result = json.loads(response.read().decode('utf-8'))
         return response.status, result
 
+    def put(self, url='/', data={}):
+        headers = {'Content-type': 'application/json'}
+        json_str = json.dumps(data)
+        self.connection.request('PUT', url, json_str, headers)
+        response = self.connection.getresponse()
+        source = response.read().decode('utf-8')
+        result = json.loads(source)
+        return response.status, result
+
     def get(self, url='/', params=None):
         headers = {'Content-type': 'application/json'}
         if params is not None:
