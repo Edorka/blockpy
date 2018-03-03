@@ -1,5 +1,5 @@
 from block import Block
-from api.serve import APIHandler
+from api.server import APIHandler
 
 
 app = APIHandler()

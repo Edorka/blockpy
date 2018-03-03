@@ -1,10 +1,40 @@
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 import json
+from http.server import HTTPServer
+import socket
+from time import sleep
 
 
 class UnknownMethod(Exception):
     pass
+
+
+class APIServer(HTTPServer):
+    allow_reuse_address = True
+
+    def __init__(self, app, port=8181):
+        self.app = app
+        self.listen(port)
+
+    def listen(self, port, retry=3):
+        while retry:
+            try:
+                server_address = ('', port)
+                super().__init__(server_address, self.app.serve)
+                break
+            except socket.error as error:
+                retry -= 1
+                if retry is 0:
+                    raise error
+                sleep(0.05)
+
+    def serve(self):
+        try:
+            self.serve_forever()
+        finally:
+            self.server_close()
+
 
 
 class APIHandler(BaseHTTPRequestHandler):

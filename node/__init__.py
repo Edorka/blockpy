@@ -1,19 +1,16 @@
-import socket
-from time import sleep
 from block.chain import Blockchain
-from .service import app
 from .client import NodeClient
-from http.server import HTTPServer
+from .server import app
+from api.server import APIServer
 
 
-class Node(HTTPServer):
-    allow_reuse_address = True
+class Node(APIServer):
 
-    def __init__(self, port=8181, genesis_block=None, peers=[]):
+    def __init__(self, genesis_block=None, peers=[], **kwargs):
         self.set_chain(genesis_block)
-        self.listen(port)
         self.set_peers(peers)
         self.update_from_peers()
+        super().__init__(app, **kwargs)
 
     def set_chain(self, genesis_block):
         self.chain = Blockchain()
@@ -27,24 +24,6 @@ class Node(HTTPServer):
         if report is True:
             self.broadcast(new_block)
         return True
-
-    def listen(self, port, retry=3):
-        while retry:
-            try:
-                server_address = ('', port)
-                super().__init__(server_address, app.serve)
-                break
-            except socket.error as error:
-                retry -= 1
-                if retry is 0:
-                    raise error
-                sleep(0.05)
-
-    def serve(self):
-        try:
-            self.serve_forever()
-        finally:
-            self.server_close()
 
     def set_peers(self, peers):
         self.peers = []
