@@ -68,3 +68,18 @@ class BlockTestCase(unittest.TestCase, APIClient):
         import socket
         with self.assertRaises(socket.error):
             self.create_node('c', port=35555)
+
+    def test_update_from_longest_chain(self):
+        last = self.genesis_block
+        node_a = self.nodes.get('a')
+        node_b = self.nodes.get('b')
+        for current in range(5):
+            new_block = last.next({"message": "new block:{}".format(current)})
+            if current < 4:
+                node_a.add_block(new_block)
+            node_b.add_block(new_block)
+            last = new_block
+        peers = ['localhost:35555', 'localhost:35556']
+        node_c = self.create_node('c', port=35558,
+                                  peers=peers)
+        self.assertEqual(len(node_c.chain), 6)

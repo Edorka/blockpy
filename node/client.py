@@ -1,6 +1,17 @@
 from api.client import APIClient
-from block import Block
+from block import Block, GenesisBlock
 from collections import deque
+
+
+def block_from_data(source):
+    index = source.get('index')
+    if index == 0:
+        return GenesisBlock(source.get('data'),
+                            source.get('timestamp'))
+    return Block(index,
+                 source.get('previous_hash'),
+                 source.get('data'),
+                 source.get('timestamp'))
 
 
 class NodeClient(APIClient):
@@ -12,11 +23,19 @@ class NodeClient(APIClient):
     def update_with_data(self, response, current):
         for data in response.get('items', []):
             try:
-                index = data.get('index')
-                new_block = Block(index, data.get('previous_hash'), data.get('data'))
+                new_block = block_from_data(data)
                 current.append(new_block)
             except Exception as error:
                 self.errors.append(error)
+
+    def get_last_block(self, last_known=0):
+        status_code, result = self.get(url='/blocks/last')
+        if status_code == 200:
+            index = result.get('index')
+            if index > last_known:
+                last_block = block_from_data(result)
+                return last_block
+        return None
 
     def get_update(self, current):
         processed_index = max([block.index for block in current])

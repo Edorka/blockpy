@@ -46,8 +46,9 @@ class Block:
                 self.previous_hash == other.previous_hash)
 
     def __repr__(self):
-        return "<Block {index} {hash} {timestamp}>".format(index=self.index,
-                                                           hash=self.hash,
+        small_hash = self.hash[:4] + "..." + self.hash[-4:]
+        return "<Block[{index}]{hash}@{timestamp}>".format(index=self.index,
+                                                           hash=small_hash,
                                                            timestamp=self.timestamp)
 
 

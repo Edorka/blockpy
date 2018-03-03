@@ -54,9 +54,22 @@ class Node(HTTPServer):
         self.peers.append(new_node)
         new_node.get_update(self.chain)
 
-    def update_from_peers(self):
+    def find_best_peer(self, last_index=0):
+        best_peer = None
         for peer in self.peers:
-            peer.get_update(self.chain)
+            last_block = peer.get_last_block(last_index)
+            if last_block is None:
+                continue
+            node_last_index = last_block.index
+            if node_last_index > last_index:
+                last_index, best_peer = node_last_index, peer
+        return best_peer
+
+    def update_from_peers(self):
+        last_index = max([block.index for block in self.chain])
+        best_peer = self.find_best_peer(last_index)
+        if best_peer is not None:
+            best_peer.get_update(self.chain)
 
     def broadcast(self, new_block):
         for peer in self.peers:
