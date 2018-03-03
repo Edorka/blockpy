@@ -1,7 +1,8 @@
+import socket
+from time import sleep
 from block.chain import Blockchain
 from .service import app
 from .client import NodeClient
-import socket
 from http.server import HTTPServer
 
 
@@ -37,6 +38,7 @@ class Node(HTTPServer):
                 retry -= 1
                 if retry is 0:
                     raise error
+                sleep(0.05)
 
     def serve(self):
         try:
