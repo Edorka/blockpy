@@ -17,7 +17,7 @@ class APIServer(HTTPServer):
         self.app = app
         self.listen(port)
 
-    def listen(self, port, retry=3):
+    def listen(self, port, retry=6):
         while retry:
             try:
                 server_address = ('', port)
@@ -27,14 +27,13 @@ class APIServer(HTTPServer):
                 retry -= 1
                 if retry is 0:
                     raise error
-                sleep(0.05)
+                sleep(0.25)
 
     def serve(self):
         try:
             self.serve_forever()
         finally:
             self.server_close()
-
 
 
 class APIHandler(BaseHTTPRequestHandler):
