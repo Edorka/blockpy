@@ -4,6 +4,29 @@ from .server import app
 from api.server import APIServer
 
 
+def majority(hashes_and_peers):
+    """Will return the hash and first member of the most populated choice
+    on the input
+    :param:hashes_and_peers dict of hashed referencing a list of the peers
+    which have replied with sush hash of last block on their chains"""
+    if len(hashes_and_peers) == 0:
+        return None, None
+    if len(hashes_and_peers) == 1:
+        return hashes_and_peers[0]
+    peers_for_hash = {}
+    best_hash = None
+    best_hash_members_count = 0
+    for current_hash, peer in hashes_and_peers:
+        previous = peers_for_hash.get(current_hash, [])
+        current_hash_members = previous + [peer]
+        peers_for_hash[current_hash] = current_hash_members
+        current_hash_members_count = len(current_hash_members)
+        if current_hash_members_count > best_hash_members_count:
+            best_hash = current_hash
+            best_hash_members_count = current_hash_members_count
+    return best_hash, peers_for_hash[best_hash].pop()
+
+
 class Node(APIServer):
 
     def __init__(self, genesis_block=None, peers=[], **kwargs):
@@ -27,24 +50,34 @@ class Node(APIServer):
 
     def set_peers(self, peers):
         self.peers = []
-        for peer in peers:
-            self.new_peer(peer)
+        for host in peers:
+            self.add_peer(host)
 
-    def new_peer(self, host):
+    def add_peer(self, host):
         new_node = NodeClient(host)
         self.peers.append(new_node)
+        return new_node
+
+    def new_peer(self, host):
+        new_node = self.add_peer(host)
         new_node.get_update(self.chain)
 
     def find_best_peer(self, last_index=0):
-        best_peer = None
+        best_peers = []
         for peer in self.peers:
-            last_block = peer.get_last_block(last_index)
+            last_block = peer.get_last_block()
             if last_block is None:
                 continue
             node_last_index = last_block.index
+            peer_tuple = (last_block.hash, peer)
             if node_last_index > last_index:
-                last_index, best_peer = node_last_index, peer
-        return best_peer
+                last_index = node_last_index
+                best_peers = [peer_tuple]
+            else:
+                best_peers.append(peer_tuple)
+                pass  # ignored
+        _, result = majority(best_peers)
+        return result
 
     def update_from_peers(self):
         last_index = max([block.index for block in self.chain])
