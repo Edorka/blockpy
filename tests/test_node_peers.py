@@ -5,11 +5,13 @@ from api.client import APIClient
 from block import GenesisBlock
 
 
-class BlockTestCase(unittest.TestCase, APIClient):
+class PeersTestCase(unittest.TestCase, APIClient):
 
     def create_node(self, name, port=35555, genesis_block=None, peers=[]):
         if genesis_block is None:
             genesis_block = self.genesis_block
+        if name in self.nodes:
+            raise Exception('{} node already exists'.format(name))
         new_node = Node(port=port, peers=peers, genesis_block=genesis_block)
         self.nodes[name] = new_node
         threading.Thread(target=new_node.serve).start()
@@ -25,6 +27,8 @@ class BlockTestCase(unittest.TestCase, APIClient):
         self.create_node('b', port=35556)
 
     def tearDown(self):
+        peer_list = ','.join(self.nodes.keys())
+        print('shutting down: {}'.format(peer_list))
         for name, node in self.nodes.items():
             node.shutdown()
             node.server_close()
@@ -83,3 +87,35 @@ class BlockTestCase(unittest.TestCase, APIClient):
         node_c = self.create_node('c', port=35558,
                                   peers=peers)
         self.assertEqual(len(node_c.chain), 6)
+
+    def test_do_not_update_from_discrepant(self):
+        node_a = self.nodes.get('a')
+        node_b = self.nodes.get('b')
+        node_c = self.create_node('c', port=45557)
+        node_d = self.create_node('d', port=45558)
+        last = self.genesis_block
+        for current in range(5):
+            new_block = last.next({"message": "new block:{}".format(current)})
+            node_b.add_block(new_block)
+            node_c.add_block(new_block)
+            node_d.add_block(new_block)
+            if current < 4:
+                node_a.add_block(new_block)
+            else:
+                rare_block = last.next({"message": "rare block:{}".format(current)})
+                node_a.add_block(rare_block)
+            last = new_block
+        self.assertEqual(len(node_a.chain), 6)
+        self.assertEqual(len(node_b.chain), 6)
+        self.assertEqual(len(node_c.chain), 6)
+        self.assertEqual(len(node_d.chain), 6)
+        peers = ['localhost:35555',
+                 'localhost:35556',
+                 'localhost:45557',
+                 'localhost:45558']
+        node_n = self.create_node('n', port=45559,
+                                  peers=peers)
+        self.assertEqual(len(node_n.peers), 4)
+        self.assertEqual(len(node_n.chain), 6)
+        last_node = node_n.chain.last()
+        self.assertEqual(last_node.hash, last.hash)
