@@ -13,13 +13,22 @@ def majority(hashes_and_peers):
         return None, None
     if len(hashes_and_peers) == 1:
         return hashes_and_peers[0]
+    return choose_majority(hashes_and_peers)
+
+
+def accumulate_members(current_hash, peer, peers_for_hash):
+    previous_hash_members = peers_for_hash.get(current_hash, [])
+    current_hash_members = previous_hash_members + [peer]
+    peers_for_hash[current_hash] = current_hash_members
+    return current_hash_members
+
+
+def choose_majority(hashes_and_peers):
     peers_for_hash = {}
     best_hash = None
     best_hash_members_count = 0
     for current_hash, peer in hashes_and_peers:
-        previous = peers_for_hash.get(current_hash, [])
-        current_hash_members = previous + [peer]
-        peers_for_hash[current_hash] = current_hash_members
+        current_hash_members = accumulate_members(current_hash, peer, peers_for_hash)
         current_hash_members_count = len(current_hash_members)
         if current_hash_members_count > best_hash_members_count:
             best_hash = current_hash
