@@ -4,10 +4,50 @@ import json
 from http.server import HTTPServer
 import socket
 from time import sleep
+from functools import wraps
+import traceback
 
 
 class UnknownMethod(Exception):
     pass
+
+
+class ResourceNotFound(Exception):
+
+    def to_dict(self):
+        return {
+            'error': 'Resource not found.',
+            'reason': str(self)
+        }
+
+
+class InvalidResource(Exception):
+
+    def to_dict(self):
+        return {
+            'error': 'Invalid resource',
+            'reason': str(self)
+        }
+
+
+def may_fail(f):
+    '''
+    a decorator to perfom a controller execution of the method
+    '''
+    @wraps(f)
+    def watch_for_errors(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except ResourceNotFound as error:
+            return 404, error.to_dict()
+        except InvalidResource as error:
+            return 400, error.to_dict()
+        except Exception as error:
+            traceback.print_exc()
+            print('error {}'.format(error))
+            traceback.print_stack()
+            return 500, {'error': str(error)}
+    return watch_for_errors
 
 
 class APIServer(HTTPServer):
@@ -80,6 +120,10 @@ class APIHandler(BaseHTTPRequestHandler):
                 return method
         else:
             raise UnknownMethod
+
+    def end_headers(self):
+        # ENABLE for dev # self.send_header('Access-Control-Allow-Origin', '*')
+        BaseHTTPRequestHandler.end_headers(self)
 
     def reply(self, code, result):
         self.send_response(code)
