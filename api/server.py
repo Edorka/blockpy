@@ -164,6 +164,7 @@ class APIHandler(BaseHTTPRequestHandler):
 
     def do_OPTIONS(self):
         self.send_response(200, "ok")
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Cache-Control,Content-Type,Authorization")
         self.send_header('Access-Control-Max-Age', 1728000)
