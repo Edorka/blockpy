@@ -7,6 +7,7 @@ setup(
     author='Eduardo Orive',
     author_email='edorka@gmail.com',
     description='Minimal implementation of a blockchain',
-    packages=find_packages(),
+    # packages=find_packages(),
+    py_modules=["block", "node"],
     install_requires=[],
 )
