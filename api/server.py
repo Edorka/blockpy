@@ -162,6 +162,13 @@ class APIHandler(BaseHTTPRequestHandler):
             code, result = 404, {'error': 'method not found'}
         self.reply(code, result)
 
+    def do_OPTIONS(self):
+        self.send_response(200, "ok")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Cache-Control,Content-Type,Authorization")
+        self.send_header('Access-Control-Max-Age', 1728000)
+        self.end_headers()
+
     def extract_json(self):
         content_len = int(self.headers.get('content-length'))
         post_body = self.rfile.read(content_len)
