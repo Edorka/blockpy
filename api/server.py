@@ -122,7 +122,7 @@ class APIHandler(BaseHTTPRequestHandler):
             raise UnknownMethod
 
     def end_headers(self):
-        # ENABLE for dev # self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Origin', '*')  # ENABLED for dev
         BaseHTTPRequestHandler.end_headers(self)
 
     def reply(self, code, result):
@@ -164,7 +164,6 @@ class APIHandler(BaseHTTPRequestHandler):
 
     def do_OPTIONS(self):
         self.send_response(200, "ok")
-        self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Cache-Control,Content-Type,Authorization")
         self.send_header('Access-Control-Max-Age', 1728000)
