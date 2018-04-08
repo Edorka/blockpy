@@ -13,22 +13,22 @@ class Blockchain(deque):
             return None
         return self[-1]
 
-    def are_correlated(self, one, other):
-        received = other.index
+    def are_correlated(self, one, next_one):
+        received = next_one.index
         expected = one.index + 1
         if received != expected:
             raise BlocksNotCorrelativeException(received, expected)
         return True
 
-    def emmited_before(self, one, other):
-        next_timestamp = other.timestamp
+    def emmited_before(self, one, next_one):
+        next_one_timestamp = next_one.timestamp
         timestamp = one.timestamp
-        if next_timestamp < timestamp:
-            raise BlocksNotSequentialException(timestamp, next_timestamp)
+        if next_one_timestamp < timestamp:
+            raise BlocksNotSequentialException(timestamp, next_one_timestamp)
         return True
 
-    def hash_validates(self, one, other):
-        refences_hash = other.previous_hash
+    def hash_validates(self, one, next_one):
+        refences_hash = next_one.previous_hash
         current_hash = one.get_hash()
         if refences_hash != current_hash:
             raise BlockHashDontMatchException(current_hash, refences_hash)
