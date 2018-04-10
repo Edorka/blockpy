@@ -13,25 +13,17 @@ class Blockchain(deque):
             return None
         return self[-1]
 
-    def are_correlated(self, one, next_one):
-        received = next_one.index
-        expected = one.index + 1
-        if received != expected:
-            raise BlocksNotCorrelativeException(received, expected)
+    def are_correlated(self, last, next_one):
+        """The next block index must be inmediate next to current"""
         return True
 
-    def emmited_before(self, one, next_one):
-        next_one_timestamp = next_one.timestamp
-        timestamp = one.timestamp
-        if next_one_timestamp < timestamp:
-            raise BlocksNotSequentialException(timestamp, next_one_timestamp)
+    def emmited_before(self, last, next_one):
+        """Next block's timestamp must be greater that current one"""
         return True
 
-    def hash_validates(self, one, next_one):
-        refences_hash = next_one.previous_hash
-        current_hash = one.get_hash()
-        if refences_hash != current_hash:
-            raise BlockHashDontMatchException(current_hash, refences_hash)
+    def hash_validates(self, last, next_one):
+        """Last block hash can't be diferent to the one specified
+        on the next one"""
         return True
 
     def validate_next(self, last, next_block):

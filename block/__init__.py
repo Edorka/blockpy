@@ -11,22 +11,19 @@ def current_timestamp():
 class Block:
 
     def __init__(self, index, previous_hash, data, timestamp=None):
-        self.index = index
-        self.previous_hash = previous_hash
-        if timestamp is None:
-            timestamp = current_timestamp()
-        self.timestamp = timestamp
-        self.data = data
+        """Any block should contain a sequence index, a timestamp,
+        it's content data and the hash of the previous block"""
         self.hash = self.get_hash()
 
     def get_hash(self):
-        content = str(self.index) + self.previous_hash + str(self.timestamp)
-        content += json.dumps(self.data)
+        """Provide a unique key to tell blocks apart by it's
+        attributes and contents"""
+        content = ''
         return hashlib.sha256(content.encode('utf-8')).hexdigest()
 
     def next(self, data, index=None,  timestamp=None):
-        timestamp = current_timestamp() if timestamp is None else timestamp
-        index = self.index + 1 if index is None else index
+        """This method should ease the creation of a block next
+        to this one"""
         return Block(index, self.hash, data, timestamp)
 
     def to_dict(self):
