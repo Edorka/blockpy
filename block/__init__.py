@@ -3,21 +3,21 @@ import hashlib
 import json
 
 
+def current_timestamp():
+    now = datetime.datetime.today()
+    return now.timestamp()
+
+
 class Block:
 
     def __init__(self, index, previous_hash, data, timestamp=None):
         self.index = index
         self.previous_hash = previous_hash
         if timestamp is None:
-            timestamp = Block.current_timestamp()
+            timestamp = current_timestamp()
         self.timestamp = timestamp
         self.data = data
         self.hash = self.get_hash()
-
-    @classmethod
-    def current_timestamp(cls):
-        now = datetime.datetime.today()
-        return now.timestamp()
 
     def get_hash(self):
         content = str(self.index) + self.previous_hash + str(self.timestamp)
@@ -25,7 +25,7 @@ class Block:
         return hashlib.sha256(content.encode('utf-8')).hexdigest()
 
     def next(self, data, index=None,  timestamp=None):
-        timestamp = Block.current_timestamp() if timestamp is None else timestamp
+        timestamp = current_timestamp() if timestamp is None else timestamp
         index = self.index + 1 if index is None else index
         return Block(index, self.hash, data, timestamp)
 
