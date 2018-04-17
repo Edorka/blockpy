@@ -38,19 +38,17 @@ class BlockTestCase(unittest.TestCase):
     @mock.patch.object(hashlib, 'sha256')
     def test_obtained_hash(self, mocked):
         selected_datetime = datetime.datetime(2018, 3, 1, 11, 21, 33)
-        expected = 'hashed'.encode('utf-8')
         index = 0
-        expected = str(index)
         previous_hash = '000000000'
-        expected += str(previous_hash)
         selected_timestamp = selected_datetime.timestamp()
-        expected += str(selected_timestamp)
         content = {'message': 'do not panic'}
-        expected += str(json.dumps(content))
         Block(index, previous_hash, content, selected_timestamp)
-        args, kwargs = mocked.call_args
-        obtained = args[0]
-        self.assertIn(expected.encode(), obtained)
+        [hash_input], kwargs = mocked.call_args
+        obtained = hash_input.decode()
+        self.assertIn(str(index), obtained)
+        self.assertIn(str(previous_hash), obtained)
+        self.assertIn(str(selected_timestamp), obtained)
+        self.assertIn(json.dumps(content), obtained)
 
     def test_genesis_valid_next(self):
         data = {
