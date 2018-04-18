@@ -50,6 +50,64 @@ class BlockTestCase(unittest.TestCase):
         self.assertIn(str(selected_timestamp), obtained)
         self.assertIn(json.dumps(content), obtained)
 
+    def test_is_equal(self):
+        selected_datetime = datetime.datetime(2018, 3, 1, 11, 21, 33)
+        index = 0
+        previous_hash = '000000000'
+        selected_timestamp = selected_datetime.timestamp()
+        content = {'message': 'do not panic'}
+        one_block = Block(index, previous_hash, content, selected_timestamp)
+        equal_block = Block(index, previous_hash, content, selected_timestamp)
+        self.assertTrue(one_block == equal_block)
+
+    def test_is_not_equal_by_index(self):
+        selected_datetime = datetime.datetime(2018, 3, 1, 11, 21, 33)
+        index = 0
+        previous_hash = '000000000'
+        selected_timestamp = selected_datetime.timestamp()
+        content = {'message': 'do not panic'}
+        one_block = Block(index, previous_hash, content, selected_timestamp)
+        other_index = 1
+        other_block = Block(other_index, previous_hash, content, selected_timestamp)
+        self.assertTrue(one_block != other_block)
+
+    def test_is_not_equal_by_previous_hash(self):
+        selected_datetime = datetime.datetime(2018, 3, 1, 11, 21, 33)
+        index = 0
+        previous_hash = '000000000'
+        selected_timestamp = selected_datetime.timestamp()
+        content = {'message': 'do not panic'}
+        one_block = Block(index, previous_hash, content, selected_timestamp)
+        other_previous_hash = '3a3a3a3a33a'
+        other_block = Block(index, other_previous_hash, content, selected_timestamp)
+        self.assertTrue(one_block != other_block)
+
+    def test_is_not_equal_by_timestamp(self):
+        selected_datetime = datetime.datetime(2018, 3, 1, 11, 21, 33)
+        index = 0
+        previous_hash = '000000000'
+        selected_timestamp = selected_datetime.timestamp()
+        content = {'message': 'do not panic'}
+        one_block = Block(index, previous_hash, content, selected_timestamp)
+        other_datetime = datetime.datetime(2018, 3, 1, 11, 21, 32)
+        other_timestamp = other_datetime.timestamp()
+        other_block = Block(index, previous_hash, content, other_timestamp)
+        self.assertTrue(one_block != other_block)
+
+    def test_is_not_equal_by_content(self):
+        selected_datetime = datetime.datetime(2018, 3, 1, 11, 21, 33)
+        index = 0
+        previous_hash = '000000000'
+        selected_timestamp = selected_datetime.timestamp()
+        content = {'message': 'do not panic'}
+        one_block = Block(index, previous_hash, content, selected_timestamp)
+        other_content = {
+            'message': 'do not panic',
+            'additional': 'this is not expected'
+        }
+        other_block = Block(index, previous_hash, other_content, selected_datetime)
+        self.assertTrue(one_block != other_block)
+
     def test_genesis_valid_next(self):
         data = {
             'message': 'this is the genesis block'
