@@ -1,10 +1,10 @@
-from datetime import datetime
+import datetime
 import hashlib
 import json
 
 
 def current_timestamp():
-    now = datetime.today()
+    now = datetime.datetime.today()
     return now.timestamp()
 
 
