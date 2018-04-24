@@ -48,7 +48,8 @@ class BlockTestCase(unittest.TestCase):
         self.assertIn(str(index), obtained)
         self.assertIn(str(previous_hash), obtained)
         self.assertIn(str(selected_timestamp), obtained)
-        self.assertIn(json.dumps(content), obtained)
+        expected_content = json.dumps(content, separator=(',', ':'))
+        self.assertIn(expected_content, obtained)
 
     def test_is_equal(self):
         selected_datetime = datetime.datetime(2018, 3, 1, 11, 21, 33)
