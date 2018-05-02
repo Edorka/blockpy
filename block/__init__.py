@@ -21,7 +21,7 @@ class Block:
 
     def get_hash(self):
         content = str(self.index) + self.previous_hash + str(self.timestamp)
-        content += json.dumps(self.data)
+        content += json.dumps(self.data, separators=(',', ':'))
         return hashlib.sha256(content.encode('utf-8')).hexdigest()
 
     def next(self, data, index=None,  timestamp=None):
